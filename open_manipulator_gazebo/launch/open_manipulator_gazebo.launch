@@ -5,6 +5,7 @@
   <arg name="gui" default="true"/>
   <arg name="headless" default="false"/>
   <arg name="debug" default="false"/>
+  <arg name="dual_maipulators" default="true"/>
 
   <rosparam file="$(find open_manipulator_gazebo)/config/gazebo_controller.yaml" command="load" />
 
@@ -18,14 +19,45 @@
     <arg name="headless" value="$(arg headless)"/>
   </include>
 
-  <!-- Load the URDF into the ROS Parameter Server -->
-  <param name="robot_description"
-   command="$(find xacro)/xacro --inorder '$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro'"/>
+  <group unless="$(arg dual_maipulators)" ns="/open_manipulator">
+    <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="robot_description"
+    command="$(find xacro)/xacro --inorder '$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro'"/>
 
-  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
-  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-     args="-urdf -model open_manipulator -z 0.0 -param robot_description"/>
+    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+      args="-urdf -model open_manipulator -z 1.0 -R -1.57142857143 -P 1.57142857143 -param robot_description"/>
 
-  <!-- ros_control robotis manipulator launch file -->
-  <include file="$(find open_manipulator_gazebo)/launch/open_manipulator_controller.launch"/>
+    <!-- ros_control robotis manipulator launch file -->
+    <include file="$(find open_manipulator_gazebo)/launch/open_manipulator_controller.launch"/>
+  </group>
+
+  <group if="$(arg dual_maipulators)">
+    <!-- Left Arm -->
+    <group  ns="/left_arm">
+      <!-- Load the URDF into the ROS Parameter Server -->
+      <param name="robot_description"
+      command="$(find xacro)/xacro --inorder '$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro'"/>
+
+      <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+      <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model left_arm -z 1.0 -y 0.2 -R -1.57142857143 -P 1.57142857143 -param robot_description"/>
+
+      <!-- ros_control robotis manipulator launch file -->
+      <include file="$(find open_manipulator_gazebo)/launch/open_manipulator_controller.launch"/>
+    </group>
+    <!-- Right Arm -->
+    <group  ns="/right_arm">
+      <!-- Load the URDF into the ROS Parameter Server -->
+      <param name="robot_description"
+      command="$(find xacro)/xacro --inorder '$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro'"/>
+
+      <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+      <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model right_arm -z 1.0 -y -0.2 -R 1.57142857143 -P 1.57142857143 -param robot_description"/>
+
+      <!-- ros_control robotis manipulator launch file -->
+      <include file="$(find open_manipulator_gazebo)/launch/open_manipulator_controller.launch"/>
+    </group>
+  </group>
 </launch>
